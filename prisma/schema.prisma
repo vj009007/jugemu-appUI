@@ -1,0 +1,165 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL") // uses connection pooling
+  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+}
+
+enum LoginMethod {
+  GOOGLE
+  // APPLE
+  // COGNITO
+}
+
+enum StripeSubscriptionStatus {
+  ACTIVE
+  CANCELLED
+}
+
+model User {
+  id               Int         @id @default(autoincrement()) // TBD: We could use CUID for user-facing IDs
+  email            String      @unique
+  loginMethod      LoginMethod
+  userName         String      @map(name: "user_name")
+  externalId       String?     @map(name: "external_id")
+  stripeCustomerId String?     @map(name: "stripe_customer_id") // Stripe Customer ID for tracking user in Stripe
+
+  // following 3 fields are designed here:
+  // https://www.figma.com/design/xubZRi3hs4K7mGWdN0c5qJ/Jugemu.AI?node-id=220-3355&t=vfrPN09FvneoG6qF-4
+  birthDate   DateTime? @map(name: "birth_date")
+  country     String?
+  phoneNumber String?   @map(name: "phone_number")
+
+  // following 6 fields are designed here:
+  // https://www.figma.com/design/xubZRi3hs4K7mGWdN0c5qJ/Jugemu.AI?node-id=220-3467&t=vfrPN09FvneoG6qF-4
+  prefeerredLanguage    String  @default("en") @map(name: "preferred_language")
+  isMFAEnabled          Boolean @default(false) @map(name: "is_mfa_enabled")
+  totpSecret            String? @map(name: "totp_secret") // TOTP secret if we're using an authenticator app
+  isCookieEnabled       Boolean @default(true) @map(name: "is_cookie_enabled")
+  isNotificationEnabled Boolean @default(true) @map(name: "is_notification_enabled")
+  isOffersEnabled       Boolean @default(true) @map(name: "is_offers_enabled")
+  isDarkModeEnabled     Boolean @default(false) @map(name: "is_dark_mode_enabled")
+
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @updatedAt @map(name: "updated_at")
+
+  // Relationships
+  chats         Chat[]
+  subscriptions Subscription[]
+  payments      Payment[]
+
+  @@map(name: "users")
+}
+
+// Assuming we're using Stripe for payment
+model Subscription {
+  id                   Int       @id @default(autoincrement())
+  userId               Int       @map(name: "user_id")
+  stripeSubscriptionId String    @unique @map(name: "stripe_subscription_id") // Stripe Subscription ID
+  status               StripeSubscriptionStatus
+  startDate            DateTime  @map(name: "start_date") @default(now())
+  endDate              DateTime? @map(name: "end_date") // populated when the subscription is cancelled
+
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @updatedAt @map(name: "updated_at")
+
+  user     User      @relation(fields: [userId], references: [id])
+  payments Payment[]
+
+  @@map(name: "subscriptions")
+}
+
+// TBD: This would be necessary if we want to display payment history. if not, we could link user to Stripe dashboard
+model Payment {
+  id              Int      @id @default(autoincrement())
+  userId          Int      @map(name: "user_id")
+  subscriptionId  Int      @map(name: "subscription_id") // Foreign key to Subscription model
+  stripePaymentId String   @unique @map(name: "stripe_payment_id") // Stripe Payment ID
+  amount          Float
+  currency        String
+  status          String // Succeeded, Failed, etc. Could be an enum
+  paymentDate     DateTime @map(name: "payment_date")
+
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @updatedAt @map(name: "updated_at")
+
+  user         User          @relation(fields: [userId], references: [id])
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+
+  @@map(name: "payments")
+}
+
+// table to store models e.g. Chat GPT, Claude, etc.
+model Model {
+  id   Int    @id @default(autoincrement())
+  provider String
+  displayOrder Int? 
+  modalDisplayOrder Int?
+  name String @unique
+  displayName String @unique
+
+  chats    chatModel[]
+  messages Message[]
+
+  @@map(name: "models")
+}
+
+model Chat {
+  id     Int @id @default(autoincrement())
+  hash   String @unique // exposed to users
+  userId Int @map(name: "user_id")
+  shared         Boolean @default(false)
+  summary        String? // For message list in history
+
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @updatedAt @map(name: "updated_at")
+
+  models chatModel[]
+  messages       Message[]        
+  user           User                @relation(fields: [userId], references: [id])
+
+  @@map(name: "chats")
+  @@index([hash])
+}
+
+model chatModel {
+  chatId  Int @map(name: "chat_id")
+  modelId Int @map(name: "model_id")
+
+  chat  Chat  @relation(fields: [chatId], references: [id])
+  model Model @relation(fields: [modelId], references: [id])
+
+  @@id([chatId, modelId])
+  @@map(name: "chat_models")
+}
+
+// to store messages, we could reference this documentation in vercel AI sdk:
+// https://sdk.vercel.ai/docs/ai-sdk-ui/storing-messages
+// could be a huge json object in "chats" table as well
+model Message {
+  id        Int @id @default(autoincrement())
+  chatId    Int @map(name: "chat_id")
+  modelId   Int @map(name: "model_id")
+
+  content   String
+  sender    String // This can be user, system, assistant, etc.
+  tokensIn  Int?
+  tokensOut Int?
+
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @updatedAt @map(name: "updated_at")
+
+  chat  Chat  @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  model Model @relation(fields: [modelId], references: [id])
+
+  @@map(name: "messages")
+}
+
+// TBD: This schema doesn't consider the following:
+// 1. Admin user roles and permissions
+// 2. Rate limiting: ref. https://sdk.vercel.ai/docs/advanced/rate-limiting
+// 3. User's timezone
+// 4. Support history

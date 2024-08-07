@@ -1,0 +1,205 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+body :root {
+  height: 100%;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: scaleY(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+@layer utilities {
+  .content {
+    content: "";
+  }
+  body{
+    @apply bg-foreground-onEmphasis bg-[url(../../../public/bg-home.png)] bg-no-repeat bg-right-top bg-cover;
+  }
+  .flex-center {
+    @apply flex items-center justify-center;
+  }
+
+  .inline-flex-center {
+    @apply inline-flex items-center justify-center;
+  }
+
+  .absolute-center-y {
+    @apply absolute top-1/2 -translate-y-1/2;
+  }
+
+  .absolute-center-x {
+    @apply absolute left-1/2 -translate-x-1/2;
+  }
+
+  .absolute-center {
+    @apply absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2;
+  }
+
+  .hyphens-auto {
+    hyphens: auto;
+  }
+
+  .s-full {
+    @apply h-full w-full;
+  }
+
+  .s-inherit {
+    width: inherit;
+    height: inherit;
+  }
+
+  .animate-slideInDown {
+    animation-name: slideInDown;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    animation-duration: 150ms;
+    transform-origin: top;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  h2{
+    @apply text-xl font-semibold
+  }
+  @media (max-width:767px) {
+    .mobileNav{
+      @apply justify-between px-3
+    }
+    .mobileNav a{
+      @apply flex-col px-3 h-auto gap-1
+    }
+    .mobile-transparent-background {
+      background: transparent !important;
+    }
+    .moreBtn{
+      @apply absolute top-[18px] right-4 h-auto p-0 w-auto border-none 
+    }
+    .moreBtn p{
+      @apply text-xs
+    }
+    .chatBox{
+      @apply max-h-[260px] h-full
+    }
+    body{
+      @apply bg-foreground-onEmphasis bg-[url(../../../public/bg-home-mob.svg)] bg-no-repeat bg-left-top bg-cover;
+    }
+  }
+}
+
+@layer components {
+  
+  .text-h1 {
+    font-size: 72px;
+    line-height: 80px;
+    font-weight: 400;
+  }
+  .text-h2 {
+    font-size: 52px;
+    line-height: 52px;
+    font-weight: 400;
+  }
+  .text-h3 {
+    font-size: 40px;
+    line-height: 44px;
+    font-weight: 400;
+    letter-spacing: -2px;
+  }
+  .text-h4 {
+    font-size: 32px;
+    line-height: 36px;
+    font-weight: 400;
+  }
+  .text-h5 {
+    font-size: 24px;
+    line-height: 32px;
+    font-weight: 400;
+  }
+  .text-subtitle1 {
+    font-size: 20px;
+    line-height: 28px;
+    font-weight: 400;
+  }
+  .text-subtitle2 {
+    font-size: 16px;
+    line-height: 28px;
+    font-weight: 400;
+  }
+  .text-subtitle3 {
+    font-size: 14px;
+    line-height: 24px;
+    font-weight: 400;
+  }
+  .text-subtitle4 {
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 400;
+  }
+  .text-subtitle5 {
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 400;
+  }
+  @media (max-width:767px) {
+    .text-h3 {
+      font-size: 24px;
+      line-height: 32px;
+      font-weight: 400;
+      letter-spacing: -1px;
+    }
+    
+  }
+}
+/********* Arrow Icon For Button ********/
+@font-face {
+  font-family: "icomoon";
+  src: url("../../../public/icon/icomoon.eot?zedilj");
+  src: url("../../../public/icon/icomoon.eot?zedilj#iefix") format("embedded-opentype"),
+    url("../../../public/icon/icomoon.ttf?zedilj") format("truetype"),
+    url("../../../public/icon/icomoon.woff?zedilj") format("woff"),
+    url("../../../public/icon/icomoon.svg?zedilj#icomoon") format("svg");
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
+[class^="icon-"],
+[class*=" icon-"] {
+  /* use !important to prevent issues with browser extensions that change fonts */
+  font-family: "icomoon" !important;
+  speak: never;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-btn-arrow:before {
+  content: "\e900";
+}
